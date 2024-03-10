@@ -1,15 +1,17 @@
-from flask import Blueprint, jsonify, request
 import jwt
 import base64
-from datetime import datetime, timedelta
 from functools import wraps
+from os import environ as env
+from datetime import datetime, timedelta
+from flask import Blueprint, jsonify, request
 
 auth = Blueprint("chat", __name__)
 
 db = [
     {
         'emailId': 'tanmeshnm@gmail.com',
-        'password': 'admin'
+        'password': 'admin',
+        'calendly_personal_access_token':  env.get('CALENDLY_API_KEY')
     }
 ]
 

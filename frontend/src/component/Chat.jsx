@@ -9,6 +9,11 @@ function Chat() {
     const [messageList, setMessageList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [accessToken, setAccessToken] = useState('');
+
+    useEffect(() => {
+        setAccessToken(localStorage.getItem('accessToken'));
+    }, []) 
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -30,7 +35,7 @@ function Chat() {
         const config = {
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Token': 'secret',
+                'Authorization': accessToken,
             },
         };
 

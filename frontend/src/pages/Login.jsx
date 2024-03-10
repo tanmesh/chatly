@@ -6,13 +6,8 @@ import Alert from '../component/Alert'
 function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [accessToken, setAccessToken] = useState('')
     const [error, setError] = useState('')
     const navigate = useNavigate()
-
-    useEffect(() => {
-        localStorage.setItem('accessToken', accessToken);
-    }, [accessToken])
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -40,7 +35,7 @@ function Login() {
 
         axios.post('http://localhost:5000/login', body, config)
             .then((response) => {
-                setAccessToken(response.data.token);
+                localStorage.setItem('accessToken', response.data.token);
                 navigate('/')
             })
             .catch((err) => {
@@ -54,7 +49,7 @@ function Login() {
             <div className="hero-content text-center">
                 <div className="max-w-md space-y-4" onSubmit={handleSubmit}>
                     <p className="py-6">Effortlessly manage your schedule with our intuitive chatbot. Simplify event listing and cancellations with ease. Experience the convenience today!</p>
-                    <Alert message={error} />   
+                    <Alert message={error} />
                     <form className="flex flex-col gap-4">
                         <label className="input input-bordered flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">

@@ -4,19 +4,18 @@ import ReactMarkdown from 'react-markdown';
 
 function Message({ author, message }) {
     return (
-        <>
+        <div className='flex items-start gap-4 pr-5 pt-2'>
             <ChatAvatar role={author} />
-            <div className="w-20">
-                <p className='font-bold items-center'>{author}</p>
+            <div className='group flex flex-1 justify-between gap-2'>
+                <ReactMarkdown
+                    components={{
+                        a: ({ node, ...props }) => <a style={{ color: 'blue' }} {...props} />
+                    }}
+                >
+                    {message}
+                </ReactMarkdown>
             </div>
-            <ReactMarkdown
-                components={{
-                    a: ({ node, ...props }) => <a style={{ color: 'blue' }} {...props} />
-                }}
-            >
-                {message}
-            </ReactMarkdown>
-        </>
+        </div>
     )
 }
 
