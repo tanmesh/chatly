@@ -5,7 +5,7 @@ import RobotIcon from '../assets/RobotIcon'
 
 const ChatAvatar = ({ role }) => {
   return (
-    <div className={`flex h-8 w-8 shrink-0 select-none items-center justify-center ${role == 'User' ? 'rounded-md border shadow bg-background' : ''}`}>
+    <div className={`flex h-6 w-6 shrink-0 select-none items-center justify-center ${role === 'User' ? 'rounded-md border' : ''}`}>
       {role === 'User' ? <UserIcon /> : <RobotIcon />}
     </div>
   )

@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import ChatAvatar from './ChatAvatar';
-import ReactMarkdown from 'react-markdown';
 import Send from '../assets/Send';
+import Loading from './Loading';
+import Message from './Message';
 
 function Chat() {
     const [message, setMessage] = useState('');
     const [messageList, setMessageList] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     const sendMessage = async () => {
+        setLoading(true);
         let messageContent = {
             content: {
                 author: 'User',
@@ -26,19 +28,20 @@ function Chat() {
         axios.post('http://localhost:5000/chat', { "text": message }, config)
             .then((response) => {
                 systemMessage = response.data;
-                console.log(response.data);
 
                 let systemMessageContent = {
                     content: {
-                        author: 'System',
+                        author: 'Chatly',
                         message: systemMessage,
                     },
                 };
 
                 setMessageList([...messageList, messageContent.content, systemMessageContent.content]);
                 setMessage('');
+                setLoading(false);
             })
             .catch((err) => {
+                setLoading(false);
                 console.log(err);
             })
         setMessage('');
@@ -52,27 +55,35 @@ function Chat() {
                         {messageList.map((val, key) => {
                             return (
                                 <div key={key} className="flex gap-2">
-                                    <ChatAvatar role={val.author} />
-                                    <div className="w-20">
-                                        <p className='font-bold items-center'>{val.author}</p>
-                                    </div>
-                                    <ReactMarkdown>{val.message}</ReactMarkdown>
+                                    <Message author={val.author} message={val.message} />
                                 </div>
                             );
                         })}
+                        {loading && <Loading />}
                     </div>
                 </div>
             </div>
-            <div className="flex flex-row justify-center gap-6">
+            <form
+                className="flex flex-row justify-center gap-6"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    sendMessage();
+                    setMessage('');
+                }}
+            >
                 <input
                     type="text"
                     placeholder="Type here"
                     className="input input-bordered max-w-5xl w-full"
+                    value={message}
                     onChange={(e) => {
                         setMessage(e.target.value);
-                    }} />
-                <button className="btn btn-neutral text-white" onClick={sendMessage}><Send />Send</button>
-            </div>
+                    }}
+                />
+                <button className="btn btn-neutral text-white" type="submit">
+                    <Send />Send
+                </button>
+            </form>
         </div>
     );
 }
