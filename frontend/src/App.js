@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import Home from './pages/Home';
 import Navbar from './component/Navbar';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 function App() {
   return (
@@ -11,6 +13,8 @@ function App() {
         <main className="container mx-auto px-3 pb-12">
           <Routes>
             <Route path="/" element={<Home />} exact />
+            <Route path="/login" element={<Login />} exact />
+            <Route path="/signup" element={<Signup />} exact />
           </Routes>
         </main>
       </div>

@@ -11,7 +11,7 @@ from controllers.functions import (
 )
 from controllers.calendly_controller import CalendlyController
 from services.calendly_service import CalendlyService
-
+from router.auth import token_required
 chat_engine = ChatEngine(
     model="gpt-3.5-turbo-0125",
     tools=[CancelEvent, GetScheduledEvents, CreateEvent, GeneralChat],
@@ -31,7 +31,8 @@ controller = CalendlyController(service)
 
 ## This is the endpoint that the frontend will call to send the input prompt.
 @chat.route("/chat", methods=["POST"])
-def chatz():
+@token_required
+def chatz(current_user):
     try:
         text = request.get_json()["text"]
         messages = [HumanMessage(content=text)]
@@ -44,7 +45,9 @@ def chatz():
         if function_name == "GetScheduledEvents":
             output = controller.list_scheduled_events()
 
-            output = chat_engine_general_chat.llm.invoke(f"{output} \n\n Summarize the list of events")
+            output = chat_engine_general_chat.llm.invoke(
+                f"{output} \n\n Summarize the list of events"
+            )
             tmp = json.loads(
                 output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
             )
