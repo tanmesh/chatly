@@ -2,6 +2,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 import logging
+from retry import retry
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -12,6 +13,7 @@ class CalendlyService:
     def __init__(self, api_key):
         self.api_key = api_key
 
+    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def list_scheduled_events(self):
         logging.debug('Listing all events')
         url = "https://api.calendly.com/scheduled_events"
@@ -75,6 +77,7 @@ class CalendlyService:
                 return event["uri"].split("/")[-1]
         return ""
 
+    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def cancel_event(self, args):
         logging.debug('Cancelling event')
         logging.debug(args)
@@ -104,6 +107,7 @@ class CalendlyService:
         }
         return switcher.get(date, date)
 
+    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def create_event(self, args):
         logging.debug('Creating event')
         logging.debug(args)
