@@ -8,6 +8,7 @@ function Signup() {
     const [password, setPassword] = useState('')
     const [calendyAccessToken, setCalendyAccessToken] = useState('')
     const [error, setError] = useState('')
+    const description = "Effortlessly manage your schedule with our intuitive chatbot. Simplify event listing and cancellations with ease. Experience the convenience today!"
     const calendyAccessTokenLink = "https://developer.calendly.com/how-to-authenticate-with-personal-access-tokens"
     const navigate = useNavigate()
 
@@ -49,7 +50,7 @@ function Signup() {
         <div className="hero">
             <div className="hero-content text-center">
                 <div className="max-w-md space-y-4">
-                    <p className="py-6">Effortlessly manage your schedule with our intuitive chatbot. Simplify event listing and cancellations with ease. Experience the convenience today!</p>
+                    <p className="py-6">{description}</p>
                     <Alert message={error} />
                     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                         <label className="input input-bordered flex items-center gap-2">

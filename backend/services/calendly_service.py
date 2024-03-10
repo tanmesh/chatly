@@ -27,6 +27,7 @@ class CalendlyService:
 
         all_events_json = []
         for event in response.json()["collection"]:
+            logging.debug(event)
             start_time = datetime.fromisoformat(event["start_time"])
             end_time = datetime.fromisoformat(event["end_time"])
 
@@ -43,6 +44,7 @@ class CalendlyService:
                     "status": event["status"],
                     "name": event["name"],
                     "uri": event["uri"],
+                    "cancellation_reason": event["cancellation"]["reason"]
                 }
             )
 
@@ -83,7 +85,7 @@ class CalendlyService:
 
         url = f"https://api.calendly.com/scheduled_events/{uuid}/cancellation"
 
-        payload = {"reason": "not well"}
+        payload = {"reason": args["reason"]}
 
         headers = {
             "Content-Type": "application/json",
@@ -93,8 +95,6 @@ class CalendlyService:
         response = requests.request("POST", url, json=payload, headers=headers)
         logging.debug(response.text)
         return response.text
-
-        # return url
 
     def get_date(self, date):
         switcher = {

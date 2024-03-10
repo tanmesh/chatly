@@ -36,6 +36,11 @@ class CancelEvent(BaseModel):
         description="Get the Day of the event to cancel. If it contains Today, Tomorrow or Yesterday, return it as it is otherwise return in %Y-%m-%d format",
     )
 
+    reason: str = Field(
+        ...,
+        description="Get the Reason for the event to cancel. If not present, set default as 'Not well'.",
+    )
+
 
 class GetScheduledEvents(BaseModel):
     """Return true if asked for extracting list of all events."""
@@ -68,9 +73,15 @@ class CreateEvent(BaseModel):
 
 
 class GeneralChat(BaseModel):
-    """Return summary of the input in a markdown format."""
+    """Return formatted output in a markdown format."""
 
     description: str = Field(
         ...,
-        description="Reformat the input in a presentable format. Make it in markdown format. If needed, show as bullet points, if there are link then display as link with color blue. Put output like a general chat bot response.",
+        description="""Reformat the input in a presentable format. 
+        Make it in markdown format. Put output like a general chat bot response.
+        
+        If needed, show as bullet points, if there are link then display as 
+        link with color blue. 
+
+        If its about cancelling an event, then dont forget to add the reason for the cancellation.""",
     )

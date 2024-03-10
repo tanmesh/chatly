@@ -8,6 +8,7 @@ function Login() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const navigate = useNavigate()
+    const description = "Effortlessly manage your schedule with our intuitive chatbot. Simplify event listing and cancellations with ease. Experience the convenience today!"
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -48,7 +49,7 @@ function Login() {
         <div className="hero">
             <div className="hero-content text-center">
                 <div className="max-w-md space-y-4" onSubmit={handleSubmit}>
-                    <p className="py-6">Effortlessly manage your schedule with our intuitive chatbot. Simplify event listing and cancellations with ease. Experience the convenience today!</p>
+                    <p className="py-6">{description}</p>
                     <Alert message={error} />
                     <form className="flex flex-col gap-4">
                         <label className="input input-bordered flex items-center gap-2">

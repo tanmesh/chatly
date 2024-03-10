@@ -3,6 +3,7 @@ import axios from 'axios';
 import Send from '../assets/Send';
 import Loading from './Loading';
 import Message from './Message';
+import { useNavigate } from 'react-router-dom';
 
 function Chat() {
     const [message, setMessage] = useState('');
@@ -10,10 +11,13 @@ function Chat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [accessToken, setAccessToken] = useState('');
-
+    const navigate = useNavigate();
     useEffect(() => {
+        if (!localStorage.getItem('accessToken')) {
+            navigate('/login')
+        }
         setAccessToken(localStorage.getItem('accessToken'));
-    }, []) 
+    }, [])
 
     useEffect(() => {
         const timeout = setTimeout(() => {
