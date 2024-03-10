@@ -6,7 +6,7 @@ import Navbar from './component/Navbar';
 function App() {
   return (
     <Router>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen bg-blue-100">
         <Navbar title="Chatly"/>
         <main className="container mx-auto px-3 pb-12">
           <Routes>
