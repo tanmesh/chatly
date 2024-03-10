@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 
 
 class CancelEvent(BaseModel):
-    """Cancel an event. Extract the meeting name, start date and end date of the event to cancel. It could be possible that only one of them is present"""
+    """Cancel the given event. This is done by extracting the meeting name, start date and end date from the event description."""
 
     meeting_name: str = Field(..., description="Get the Name of the event to cancel")
 
@@ -72,5 +72,5 @@ class GeneralChat(BaseModel):
 
     description: str = Field(
         ...,
-        description="Return summary of the input. Make it in markdown format. If needed, show as bullet points, if there are link then display as link with color blue. Put output like a general chat bot response.",
+        description="Reformat the input in a presentable format. Make it in markdown format. If needed, show as bullet points, if there are link then display as link with color blue. Put output like a general chat bot response.",
     )

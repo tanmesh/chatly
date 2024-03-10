@@ -12,9 +12,10 @@ from controllers.functions import (
 from controllers.calendly_controller import CalendlyController
 from services.calendly_service import CalendlyService
 from router.auth import token_required
+
 chat_engine = ChatEngine(
     model="gpt-3.5-turbo-0125",
-    tools=[CancelEvent, GetScheduledEvents, CreateEvent, GeneralChat],
+    tools=[CancelEvent, GetScheduledEvents, CreateEvent],
 )
 llm = chat_engine.llm
 
@@ -63,6 +64,14 @@ def chatz(current_user):
             )
             return tmp["description"]
         elif function_name == "CreateEvent":
-            return controller.create_event(argument_json)
+            output = controller.create_event(argument_json)
+
+            output = chat_engine_general_chat.llm.invoke(
+                f"{output} \n\n Summarize the new event created"
+            )
+            tmp = json.loads(
+                output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
+            )
+            return tmp["description"]
     except Exception as e:
         return jsonify({"error": str(e)}), 400

@@ -1,9 +1,10 @@
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 class CalendlyService:
     USER_URL = "https://api.calendly.com/users/fe8644f5-39ae-488a-af18-382f4757f0d7"
@@ -12,6 +13,7 @@ class CalendlyService:
         self.api_key = api_key
 
     def list_scheduled_events(self):
+        logging.debug('Listing all events')
         url = "https://api.calendly.com/scheduled_events"
 
         querystring = {"user": self.USER_URL}
@@ -44,18 +46,12 @@ class CalendlyService:
                 }
             )
 
-        # logging.debug("List all events:", response.text)
+        logging.debug("List all events:", all_events_json)
 
         return all_events_json
 
     def get_uuid(self, args):
-        if args["day"] in ["Today", "Tomorrow", "Yesterday"]:
-            if args["day"] == "Today":
-                args["day"] = datetime.now().strftime("%d")
-            elif args["day"] == "Tomorrow":
-                args["day"] = datetime.now().day + 1
-            elif args["day"] == "Yesterday":
-                args["day"] = datetime.now().day - 1
+        args["day"] = self.get_date(args["day"])
 
         all_events = self.list_scheduled_events()
         for event in all_events:
@@ -78,6 +74,8 @@ class CalendlyService:
         return ""
 
     def cancel_event(self, args):
+        logging.debug('Cancelling event')
+        logging.debug(args)
         uuid = self.get_uuid(args)
         logging.debug("UUID:", uuid)
         if uuid == "":
@@ -91,14 +89,28 @@ class CalendlyService:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
         }
-        # response = requests.request("POST", url, json=payload, headers=headers)
-        # return response.text
 
-        return url
+        response = requests.request("POST", url, json=payload, headers=headers)
+        logging.debug(response.text)
+        return response.text
+
+        # return url
+
+    def get_date(self, date):
+        switcher = {
+            "Today": datetime.now().strftime("%d"),
+            "Tomorrow": (datetime.now() + timedelta(days=1)).strftime("%d"),
+            "Yesterday": (datetime.now() - timedelta(days=1)).strftime("%d"),
+        }
+        return switcher.get(date, date)
 
     def create_event(self, args):
+        logging.debug('Creating event')
         logging.debug(args)
         url = "https://api.calendly.com/one_off_event_types"
+
+        args["start_date"] = self.get_date(args["start_date"])
+        args["end_date"] = self.get_date(args["end_date"])
 
         payload = {
             "name": args["name"],
@@ -124,4 +136,5 @@ class CalendlyService:
 
         response = requests.request("POST", url, json=payload, headers=headers)
 
+        logging.debug(response.text)
         return json.loads(response.text)["resource"]["scheduling_url"]
