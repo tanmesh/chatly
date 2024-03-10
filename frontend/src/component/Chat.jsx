@@ -8,6 +8,15 @@ function Chat() {
     const [message, setMessage] = useState('');
     const [messageList, setMessageList] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setError(null);
+        }, 5000);
+
+        return () => clearTimeout(timeout);
+    }, [error]);
 
     const sendMessage = async () => {
         setLoading(true);
@@ -42,6 +51,7 @@ function Chat() {
             })
             .catch((err) => {
                 setLoading(false);
+                setError(`Error sending message: ${err.response.data.error}`);
                 console.log(err);
             })
         setMessage('');
@@ -63,6 +73,7 @@ function Chat() {
                     </div>
                 </div>
             </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
             <form
                 className="flex flex-row justify-center gap-6"
                 onSubmit={(e) => {

@@ -9,7 +9,13 @@ function Message({ author, message }) {
             <div className="w-20">
                 <p className='font-bold items-center'>{author}</p>
             </div>
-            <ReactMarkdown>{message}</ReactMarkdown>
+            <ReactMarkdown
+                components={{
+                    a: ({ node, ...props }) => <a style={{ color: 'blue' }} {...props} />
+                }}
+            >
+                {message}
+            </ReactMarkdown>
         </>
     )
 }

@@ -7,9 +7,7 @@ class ChatEngine:
 
     # Rest of the class code...
     def set_model(self, model):
-        self.llm_with_tools = ChatOpenAI(model=model).bind_tools(
-            self.llm.tools
-        )
+        self.llm_with_tools = ChatOpenAI(model=model).bind_tools(self.llm.tools)
 
     def add_tool(self, tool):
         self.llm = self.llm_with_tools.bind_tools([tool])

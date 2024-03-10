@@ -18,6 +18,11 @@ chat_engine = ChatEngine(
 )
 llm = chat_engine.llm
 
+chat_engine_general_chat = ChatEngine(
+    model="gpt-3.5-turbo-0125",
+    tools=[GeneralChat],
+)
+
 chat = Blueprint("chat", __name__)
 
 service = CalendlyService(env.get("CALENDLY_API_KEY"))
@@ -37,9 +42,23 @@ def chatz():
         argument_json = json.loads(dict_data["tool_calls"][0]["function"]["arguments"])
 
         if function_name == "GetScheduledEvents":
-            return controller.list_scheduled_events(llm)
+            output = controller.list_scheduled_events()
+
+            output = chat_engine_general_chat.llm.invoke(f"{output} \n\n Summarize the list of events")
+            tmp = json.loads(
+                output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
+            )
+            return tmp["description"]
         elif function_name == "CancelEvent":
-            return controller.cancel_event(argument_json)
+            output = controller.cancel_event(argument_json)
+
+            output = chat_engine_general_chat.llm.invoke(
+                f"{argument_json} \n\n Link--{output} \n\n Summarize the cancellation of the event with the provided link."
+            )
+            tmp = json.loads(
+                output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
+            )
+            return tmp["description"]
         elif function_name == "CreateEvent":
             return controller.create_event(argument_json)
     except Exception as e:

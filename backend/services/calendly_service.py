@@ -11,8 +11,7 @@ class CalendlyService:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    # This is the endpoint to list all events
-    def list_scheduled_events(self, llm):
+    def list_scheduled_events(self):
         url = "https://api.calendly.com/scheduled_events"
 
         querystring = {"user": self.USER_URL}
@@ -47,9 +46,7 @@ class CalendlyService:
 
         # logging.debug("List all events:", response.text)
 
-        output = llm.invoke(f'{all_events_json} \n\n Summarize the list of events')
-        tmp = json.loads(output.additional_kwargs["tool_calls"][0]["function"]["arguments"])
-        return tmp["description"]
+        return all_events_json
 
     def get_uuid(self, args):
         if args["day"] in ["Today", "Tomorrow", "Yesterday"]:
