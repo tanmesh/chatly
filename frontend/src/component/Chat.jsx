@@ -62,7 +62,7 @@ function Chat() {
             })
             .catch((err) => {
                 setLoading(false);
-                setError(`Error sending message: ${err.response.data.error}`);
+                setError(err.response.data.error);
                 console.log(err);
             })
         setMessage('');

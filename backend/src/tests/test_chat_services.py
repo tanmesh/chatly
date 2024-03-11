@@ -1,6 +1,7 @@
 import os
 import sys
 import pytest
+from entity.user import User
 from unittest.mock import patch, MagicMock
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -8,10 +9,11 @@ from services.calendly_service import CalendlyService
 from exceptions.calendly_client_exception import CalendlyClientException
 from exceptions.calendly_server_exception import CalendlyServerException
 
-user = {
-    "calendly_user_url": "test_user_url",
-    "calendly_personal_access_token": "test_token"
-}
+user = User("test_email",
+            "test_password",
+            "test_user_url",
+            "test_token"
+            )
 
 @pytest.fixture
 def mock_response():

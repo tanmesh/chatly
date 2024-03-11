@@ -59,7 +59,7 @@ def test_login_service_invalid_credentials():
 def test_signup_service_success():
     auth_service = AuthService()
 
-    result, message = auth_service.signup_service("new_user@gmail.com", "password123", "calendly_token")
+    result, message = auth_service.signup_service("new_user@gmail.com", "password123", "calendly_token", "calendly_user_url")
     
     assert result == "success"
     assert message == "User registered successfully!"
