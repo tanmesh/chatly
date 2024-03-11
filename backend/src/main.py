@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from handler.chatHandler import chat
-from handler.authHandler import auth
+from handler.auth_handler import auth
+from handler.chat_handler import chat
 
 app = Flask(__name__)
 CORS(app)

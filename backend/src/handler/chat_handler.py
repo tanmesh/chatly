@@ -1,11 +1,16 @@
 from flask import request
+from services.auth_service import auth_cache
 from os import environ as env
 from flask import Blueprint, jsonify
 from services.auth_service import token_required
-from services.chat_service import chat_service
+from services.calendly_service import CalendlyService
+from services.chat_service import ChatService
 
 chat = Blueprint("chat", __name__)
 
+
+calendly_service = CalendlyService()
+chat_service = ChatService(calendly_service)
 
 ## This is the endpoint that the frontend will call to send the input prompt.
 @chat.route("/chat", methods=["POST"])
@@ -26,9 +31,10 @@ def chatz(current_user):
     if request.get_json() is None:
         return jsonify({"error": "No input provided"}), 400
 
-    type, message = chat_service(
-        current_user, request.get_json()["text"], env.get("CALENDLY_USER_URL_KEY")
-    )
+    token = request.headers.get("Authorization")
+    user = auth_cache.get(token)
+
+    type, message = chat_service.process(request.get_json()["text"], user)
 
     if type == "error":
         return jsonify({"error": message}), 400

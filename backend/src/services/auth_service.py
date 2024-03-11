@@ -4,13 +4,16 @@ from os import environ as env
 from flask import jsonify, request
 from datetime import datetime, timedelta
 
-db = [
-    {
-        "emailId": "tanmeshnm@gmail.com",
-        "password": "admin",
-        "calendly_personal_access_token": env.get("CALENDLY_API_KEY"),
-    }
-]
+db = {}
+
+db["tanmeshnm@gmail.com"] = {
+    "emailId": "tanmeshnm@gmail.com",
+    "password": "admin",
+    "calendly_personal_access_token": env.get("CALENDLY_API_KEY"),
+    "calendly_user_url": env.get("CALENDLY_USER_URL_KEY"),
+}
+
+auth_cache = {}
 
 
 def token_required(f):
@@ -33,33 +36,38 @@ def token_required(f):
 
 
 def generate_jwt_token(user_id):
-    # Define payload (data) to be included in the token
     payload = {
         "user_id": user_id,
         "exp": datetime.utcnow() + timedelta(hours=1),  # Token expiration time
     }
 
-    # Generate JWT token
     token = jwt.encode(payload, "1234", algorithm="HS256")
     return token
 
 
 def login_service(emailId, password):
-    for it in db:
-        if it["emailId"] == emailId and it["password"] == password:
+    for token, user in db.items():
+        print(token, user)
+        if user["emailId"] == emailId and user["password"] == password:
             token = generate_jwt_token(emailId + password)
+
+            print('token:', token)
+            auth_cache[token] = user
+
+            print('auth_cache:')
+            print(auth_cache)
             return "success", token
     return "error", "Invalid email or password!"
 
+
 def signup_service(emailId, password, calendly_personal_access_token):
     try:
-        db.append(
-            {
+        db[emailId] = {
                 "emailId": emailId,
                 "password": password,
                 "calendly_personal_access_token": calendly_personal_access_token,
+                "calendly_user_url": env.get("CALENDLY_USER_URL"),
             }
-        )
         return "success", "User registered successfully!"
     except:
         return "error", "Error registering user!"

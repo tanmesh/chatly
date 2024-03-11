@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, jsonify, request
 from services.auth_service import login_service, signup_service
 
-auth = Blueprint("auth", __name__)  # Renamed blueprint from "chat" to "auth"
+auth = Blueprint("auth", __name__) 
 logging.basicConfig(level=logging.DEBUG)
 
 

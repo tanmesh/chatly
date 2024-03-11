@@ -15,16 +15,8 @@ class CalendlyService:
     CANCEL_EVENT_URL = BASE_URL + "/scheduled_events/{}/cancellation"
     CREATE_EVENT_URL = BASE_URL + "/one_off_event_types"
 
-    def __init__(self, api_key, user_url_key):
-        self.api_key = api_key
-        self.user_url = self.USER_URL.format(user_url_key)
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
-        }
-
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
-    def list_scheduled_events(self):
+    def list_scheduled_events(self, user):
         """
         Retrieves a list of scheduled events for the current user.
 
@@ -36,15 +28,20 @@ class CalendlyService:
                 - 'status': The status of the event (e.g., 'active').
                 - 'name': The name of the event.
                 - 'uri': The URI of the event.
-                
+
             If an error occurs during the retrieval process, an error message is returned as a string.
         """
         logging.debug("Listing all events")
 
-        querystring = {"user": self.user_url}
+        querystring = {"user": self.USER_URL.format(user["calendly_user_url"])}
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {user['calendly_personal_access_token']}",
+        }
 
         response = requests.request(
-            "GET", self.SCHEDULED_EVENT_URL, headers=self.headers, params=querystring
+            "GET", self.SCHEDULED_EVENT_URL, headers=headers, params=querystring
         )
 
         if response.status_code != 200:
@@ -59,7 +56,9 @@ class CalendlyService:
             required_events_args = ["start_time", "end_time", "status", "name", "uri"]
             for arg in required_events_args:
                 if arg not in event:
-                    logging.error("Missing required argument: " + arg + " in event " + event)
+                    logging.error(
+                        "Missing required argument: " + arg + " in event " + event
+                    )
                     continue
 
             if event["status"] != "active":
@@ -88,7 +87,7 @@ class CalendlyService:
         return all_events_json
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
-    def cancel_event(self, args):
+    def cancel_event(self, args, user):
         """
         Cancels the specified event.
 
@@ -111,11 +110,16 @@ class CalendlyService:
 
         payload = {"reason": args["reason"]}
 
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {user['calendly_personal_access_token']}",
+        }
+
         response = requests.request(
             "POST",
             self.CANCEL_EVENT_URL.format(uuid),
             json=payload,
-            headers=self.headers,
+            headers=headers,
         )
 
         if response.status_code != 200:
@@ -123,12 +127,12 @@ class CalendlyService:
                 "Failed to cancel event. Status code: %d", response.status_code
             )
             return "Error cancelling event"
-        
+
         logging.debug(response.text)
         return response.text
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
-    def create_event(self, args):
+    def create_event(self, args, user):
         """
         Creates a new event with the specified details.
 
@@ -144,6 +148,7 @@ class CalendlyService:
         """
         logging.debug("Creating event")
         logging.debug(args)
+        print('User:', user)
 
         required_args = ["name", "duration", "start_date", "end_date"]
         for arg in required_args:
@@ -154,10 +159,11 @@ class CalendlyService:
         args["start_date"] = self.get_date(args["start_date"])
         args["end_date"] = self.get_date(args["end_date"])
 
+        me = self.USER_URL.format(user["calendly_user_url"])
         payload = {
             "name": args["name"],
-            "host": self.user_url,
-            "co_hosts": [self.user_url],
+            "host": me,
+            "co_hosts": me,
             "duration": args["duration"],
             "timezone": "US/Pacific",
             "date_setting": {
@@ -172,17 +178,21 @@ class CalendlyService:
             },
         }
 
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {user['calendly_personal_access_token']}",
+        }
         response = requests.request(
-            "POST", self.CREATE_EVENT_URL, json=payload, headers=self.headers
+            "POST", self.CREATE_EVENT_URL, json=payload, headers=headers
         )
 
-        if response.status_code != 200:
+        logging.debug(response)
+        if response.status_code != 201:
             logging.error(
                 "Failed to create event. Status code: %d", response.status_code
             )
             return "Error creating event"
 
-        logging.debug(response.text)
         return json.loads(response.text)["resource"]["scheduling_url"]
 
     def get_date(self, date):
