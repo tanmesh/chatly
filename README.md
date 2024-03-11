@@ -9,6 +9,8 @@ The Calendly Chatbot is an interactive chat interface that allows users to inter
 ### Running backend 
 
 ```bash
+export OPENAI_API_KEY=<...>
+
 # Moving to backend directory
 cd backend  
 
