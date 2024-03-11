@@ -1,7 +1,8 @@
 import json
-from os import environ as env
+import logging
 from langchain_core.messages import HumanMessage
 from services.chat_engine import ChatEngine
+from services.calendly_service import CalendlyClientException, CalendlyServerException
 from services.calendly_service import CalendlyService
 from services.functions import (
     CancelEvent,
@@ -9,15 +10,13 @@ from services.functions import (
     CreateEvent,
     GeneralChat,
 )
-import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-chat_engine = ChatEngine(
+chat_engine_with_function_calling = ChatEngine(
     model="gpt-3.5-turbo-0125",
     tools=[CancelEvent, GetScheduledEvents, CreateEvent],
 )
-llm = chat_engine.llm
 
 chat_engine_general_chat = ChatEngine(
     model="gpt-3.5-turbo-0125",
@@ -42,7 +41,7 @@ class ChatService:
 
         try:
             messages = [HumanMessage(content=text)]
-            output = llm.invoke(messages)
+            output = chat_engine_with_function_calling.llm.invoke(messages)
 
             dict_data = output.additional_kwargs
             if dict_data is None or dict_data == {}:
@@ -74,6 +73,12 @@ class ChatService:
                 output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
             )
             return "response", tmp["description"]
+        except CalendlyClientException as e:
+            logging.error("Error processing chat request" + str(e))
+            return "error", str(e)
+        except CalendlyServerException as e:
+            logging.error("Error processing chat request" + str(e))
+            return "error", str(e)
         except Exception as e:
             logging.error("Error processing chat request" + str(e))
             return "error", str(e)

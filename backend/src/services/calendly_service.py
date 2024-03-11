@@ -1,21 +1,20 @@
 import requests
 import json
-from datetime import datetime, timedelta
 import logging
-from retry import retry
+from datetime import datetime, timedelta
+from exceptions.calendly_client_exception import CalendlyClientException
+from exceptions.calendly_server_exception import CalendlyServerException
 
 logging.basicConfig(level=logging.DEBUG)
-
 
 # user_url = "https://api.calendly.com/users/fe8644f5-39ae-488a-af18-382f4757f0d7"
 class CalendlyService:
     BASE_URL = "https://api.calendly.com"
-    USER_URL = BASE_URL + "/users/{}"
     SCHEDULED_EVENT_URL = BASE_URL + "/scheduled_events"
     CANCEL_EVENT_URL = BASE_URL + "/scheduled_events/{}/cancellation"
     CREATE_EVENT_URL = BASE_URL + "/one_off_event_types"
 
-    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
+    # @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def list_scheduled_events(self, user):
         """
         Retrieves a list of scheduled events for the current user.
@@ -33,34 +32,31 @@ class CalendlyService:
         """
         logging.debug("Listing all events")
 
-        querystring = {"user": self.USER_URL.format(user["calendly_user_url"])}
+        querystring = {"user": user.get_calendly_user_url()}
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {user['calendly_personal_access_token']}",
+            "Authorization": f"Bearer {user.get_calendly_personal_access_token()}",
         }
 
         response = requests.request(
             "GET", self.SCHEDULED_EVENT_URL, headers=headers, params=querystring
         )
 
-        if response.status_code  >= 300:
+        if response.status_code  >= 500:
             logging.error(
                 "Failed to list events. Status code: %d", response.status_code
             )
-            return "Error listing events"
+            raise CalendlyServerException(f"Failed to list events. Status code: {response.status_code}")
+        
+        if response.status_code  >= 400:
+            logging.error(
+                "Failed to list events. Status code: %d", response.status_code
+            )
+            raise CalendlyClientException(f"Failed to list events. Status code: {response.status_code}")
 
         all_events_json = []
         for event in response.json()["collection"]:
-
-            required_events_args = ["start_time", "end_time", "status", "name", "uri"]
-            for arg in required_events_args:
-                if arg not in event:
-                    logging.error(
-                        "Missing required argument: " + arg + " in event " + event
-                    )
-                    continue
-
             if event["status"] != "active":
                 continue
             start_time = datetime.fromisoformat(event["start_time"])
@@ -99,20 +95,25 @@ class CalendlyService:
         Returns:
             str: A message indicating the result of the cancellation operation. If the cancellation is successful, the message will contain information about the cancelled event. If an error occurs, an error message will be returned.
         """
-        logging.debug("Cancelling event")
-        logging.debug(args)
+        logging.debug(f"Cancelling event with args: {str(args)}")
+
+        required_args = ["day", "time", "meeting_name", "reason"]
+        for arg in required_args:
+            if arg not in args:
+                logging.error("Missing required argument: " + args)
+                raise CalendlyClientException(f"Missing required argument: {arg}")
 
         uuid = self.get_uuid(args, user)
-        logging.debug("UUID:", uuid)
+
         if uuid == "":
-            logging.error("No event found")
+            logging.debug("No event found")
             return "No event found"
 
         payload = {"reason": args["reason"]}
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {user['calendly_personal_access_token']}",
+            "Authorization": f"Bearer {user.get_calendly_personal_access_token()}",
         }
 
         response = requests.request(
@@ -122,16 +123,22 @@ class CalendlyService:
             headers=headers,
         )
 
-        if response.status_code  >= 300:
+        logging.debug(response.text)
+        if response.status_code  >= 500:
             logging.error(
                 "Failed to cancel event. Status code: %d", response.status_code
             )
-            return "Error cancelling event"
+            raise CalendlyServerException("Failed to cancel event. Status code: %d", response.status_code)
 
-        logging.debug(response.text)
+        if response.status_code  >= 400:
+            logging.error(
+                "Failed to cancel event. Status code: %d", response.status_code
+            )
+            raise CalendlyClientException("Failed to cancel event. Status code: %d", response.status_code)
+        
         return response.text
 
-    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
+    # @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def create_event(self, args, user):
         """
         Creates a new event with the specified details.
@@ -146,24 +153,21 @@ class CalendlyService:
         Returns:
             str: The scheduling URL of the newly created event, if the creation is successful. If an error occurs during the creation process, an error message is returned.
         """
-        logging.debug("Creating event")
-        logging.debug(args)
-        print('User:', user)
-
+        logging.debug(f"Creating event with args: {str(args)}")
+        
         required_args = ["name", "duration", "start_date", "end_date"]
         for arg in required_args:
             if arg not in args:
                 logging.error("Missing required argument: " + args)
-                return f"Missing required argument: {arg}"
+                raise CalendlyClientException(f"Missing required argument: {arg}")
 
         args["start_date"] = self.get_date(args["start_date"])
         args["end_date"] = self.get_date(args["end_date"])
 
-        me = self.USER_URL.format(user["calendly_user_url"])
         payload = {
             "name": args["name"],
-            "host": me,
-            "co_hosts": me,
+            "host": user.get_calendly_user_url(),
+            "co_hosts": user.get_calendly_user_url(),
             "duration": args["duration"],
             "timezone": "US/Pacific",
             "date_setting": {
@@ -180,18 +184,25 @@ class CalendlyService:
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {user['calendly_personal_access_token']}",
+            "Authorization": f"Bearer {user.get_calendly_personal_access_token()}",
         }
+
         response = requests.request(
             "POST", self.CREATE_EVENT_URL, json=payload, headers=headers
         )
 
         logging.debug(response)
-        if response.status_code != 201:
+        if response.status_code >= 500:
             logging.error(
                 "Failed to create event. Status code: %d", response.status_code
             )
-            return "Error creating event"
+            raise CalendlyServerException("Failed to create event. Status code: %d", response.status_code)
+
+        if response.status_code >= 400:
+            logging.error(
+                "Failed to create event. Status code: %d", response.status_code
+            )
+            raise CalendlyClientException("Failed to create event. Status code: %d", response.status_code)
 
         return json.loads(response.text)["resource"]["scheduling_url"]
 
@@ -210,14 +221,6 @@ class CalendlyService:
         for event in all_events:
             if event["status"] != "active":
                 continue
-            logging.debug(
-                event["start_time"]["time"],
-                args["time"],
-                event["start_time"]["day"],
-                args["day"],
-                event["name"].lower(),
-                args["meeting_name"].lower(),
-            )
             if (
                 event["start_time"]["time"] == args["time"]
                 or event["start_time"]["day"] == args["day"]

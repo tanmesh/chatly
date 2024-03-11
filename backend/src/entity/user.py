@@ -10,7 +10,7 @@ class User:
     def get_calendly_personal_access_token(self):
         return self.calendly_personal_access_token
 
-    def get_calendy_user_url(self):
+    def get_calendly_user_url(self):
         return self.calendy_user_url
 
     def get_email(self):

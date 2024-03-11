@@ -1,74 +1,51 @@
 import os
 import sys
 import pytest
+from unittest.mock import patch, MagicMock
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from backend.src.main import app
+from services.calendly_service import CalendlyService
+from exceptions.calendly_client_exception import CalendlyClientException
+from exceptions.calendly_server_exception import CalendlyServerException
 
-from router.auth import generate_jwt_token
-from controllers.calendly_controller import CalendlyController
-
+user = {
+    "calendly_user_url": "test_user_url",
+    "calendly_personal_access_token": "test_token"
+}
 
 @pytest.fixture
-def client():
-    with app.test_client() as client:
-        yield client
+def mock_response():
+    response = MagicMock()
+    response.status_code = 200 
+    response.json.return_value = {
+        "collection": [
+            {"start_time": "2024-03-15T09:00:00", "end_time": "2024-03-15T10:00:00", "status": "active", "name": "Event 1", "uri": "uri1"},
+            {"start_time": "2024-03-16T10:00:00", "end_time": "2024-03-16T11:00:00", "status": "active", "name": "Event 2", "uri": "uri2"}
+        ]
+    }
+    return response
 
+def test_list_scheduled_events_successful(mock_response):
+    with patch("services.calendly_service.requests.request") as mock_request:
+        mock_request.return_value = mock_response
+        events = CalendlyService().list_scheduled_events(user)
+        assert len(events) == 2
+        assert events[0]["name"] == "Event 1"
+        assert events[1]["name"] == "Event 2"
 
-def test_chat_get_scheduled_events(client, mocker):
-    """
-    Test case for retrieving scheduled events.
+def test_list_scheduled_events_server_error(mock_response):
+    with patch("services.calendly_service.requests.request") as mock_request:
+        mock_response.status_code = 500
+        mock_request.return_value = mock_response
+        with pytest.raises(CalendlyServerException):
+            CalendlyService().list_scheduled_events(user)
 
-    Input:
-    - client: Flask test client.
-    - mocker: Pytest mocker.
+def test_list_scheduled_events_client_error(mock_response):
+    with patch("services.calendly_service.requests.request") as mock_request:
+        mock_response.status_code = 404
+        mock_request.return_value = mock_response
+        with pytest.raises(CalendlyClientException):
+            CalendlyService().list_scheduled_events(user)
 
-    Output:
-    - None.
-
-    Functionality:
-    This function tests the behavior of the chat endpoint when retrieving scheduled events.
-    It mocks the 'list_scheduled_events' method of the CalendlyController class to return a predefined summary.
-    The endpoint is called with the appropriate input data.
-    The response status code and content are then verified.
-    """
-    mocker.patch.object(
-        CalendlyController, "list_scheduled_events"
-    )
-    token = generate_jwt_token("user_id")
-    headers = {"Authorization": f"Bearer {token}"}
-    data = {"text": "show me the scheduled events"}
-
-    response = client.post("/chat", json=data, headers=headers)
-    assert response.status_code == 200
-
-
-def test_chat_error_response(client, mocker):
-    """
-    Test case for handling error response.
-
-    Input:
-    - client: Flask test client.
-    - mocker: Pytest mocker.
-
-    Output:
-    - None.
-
-    Functionality:
-    This function tests the behavior of the chat endpoint when an error occurs.
-    It mocks the 'list_scheduled_events' method of the CalendlyController class to raise an exception.
-    The endpoint is called with the appropriate input data.
-    The response status code and content are then verified.
-    """
-    mocker.patch.object(
-        CalendlyController,
-        "list_scheduled_events",
-        side_effect=Exception("An error occurred"),
-    )
-    token = generate_jwt_token("user_id")  # Provide a valid JWT token
-    headers = {"Authorization": f"Bearer {token}"}
-    data = {"text": "GetScheduledEvents"}
-
-    response = client.post("/chat", json=data, headers=headers)
-    assert response.status_code == 400
-    assert response.json == {"error": "An error occurred"}
+if __name__ == "__main__":
+    pytest.main()

@@ -60,13 +60,13 @@ class AuthService:
                 return "success", token
         return "error", "Invalid email or password!"
 
-    def signup_service(self, emailId, password, calendly_personal_access_token):
+    def signup_service(self, emailId, password, calendly_personal_access_token, calendly_user_url):
         try:
             user = User(
                 emailId,
                 password,
                 calendly_personal_access_token,
-                env.get("CALENDLY_USER_URL"),
+                calendly_user_url,
             )
 
             db[emailId] = user

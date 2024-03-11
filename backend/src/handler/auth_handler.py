@@ -45,18 +45,23 @@ def signup():
     Expects JSON data with keys 'email', 'password', and 'calendly_personal_access_token'.
     Returns a JSON response with a success message if signup is successful, or an error message otherwise.
     """
-    try:
+    try:    
         email = request.json.get("email")
         encoded_password = request.json.get("password")
         encoded_pat = request.json.get("calendly_personal_access_token")
+        encoded_user_url = request.json.get("calendly_user_url")
 
-        password = base64.b64decode(encoded_password).decode("utf-8")
-        calendly_personal_access_token = base64.b64decode(encoded_pat).decode("utf-8")
+        try:
+            password = base64.b64decode(encoded_password).decode("utf-8")
+            calendly_personal_access_token = base64.b64decode(encoded_pat).decode("utf-8")    
+            calendly_user_url = base64.b64decode(encoded_user_url).decode("utf-8")
+        except:
+            return jsonify({"error": "Unable to parse data!"}), 400
 
-        if not email or not password or not calendly_personal_access_token:
+        if email is None or password is None or calendly_personal_access_token is None or calendly_user_url is None:
             return jsonify({"error": "Fields cannot be empty!"}), 400
 
-        type, message = auth_service.signup_service(email, password, calendly_personal_access_token)
+        type, message = auth_service.signup_service(email, password, calendly_personal_access_token, calendly_user_url)
 
         if type == "error":
             return jsonify({"error": message}), 400

@@ -1,137 +1,68 @@
 import os
+from os import environ as env
 import sys
 import pytest
-import base64
+from unittest.mock import patch
+from flask import Flask
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from backend.src.main import app
-
-
+from services.auth_service import AuthService
+from entity.user import User
 
 @pytest.fixture
-def client():
-    with app.test_client() as client:
-        yield client
+def app():
+    app = Flask(__name__)
+    return app
 
+@pytest.fixture
+def client(app):
+    return app.test_client()
 
-def test_login(client):
-    """
-    Test case for successful login.
+def test_generate_jwt_token():
+    auth_service = AuthService()
+    
+    token = auth_service.generate_jwt_token("test_user_id")
+    assert token is not None
 
-    Input:
-    - client: Flask test client.
+def test_login_service_success():
+    auth_service = AuthService()
 
-    Output:
-    - None.
-
-    Functionality:
-    This function tests the login functionality by adding a user to the database with known credentials.
-    It sends a POST request to the "/login" endpoint with valid login credentials.
-    The response status code is checked to ensure it's 200 (OK), indicating a successful login.
-    The response content is then checked to ensure it contains a "token" field.
-    """
-    db.append(
-        {
-            "emailId": "test@example.com",
-            "password": "test_password",
-            "calendly_personal_access_token": "test_calendly_token",
-        }
+    user = User(
+        "tanmeshnm@gmail.com",
+        "admin",
+        "calendly_token",
+        "calendly_user_url",
     )
 
-    credentials = {
-        "email": "test@example.com",
-        "password": base64.b64encode(b"test_password").decode("utf-8"),
-    }
+    with patch.dict('services.auth_service.db', {"tanmeshnm@gmail.com": user}):
+        result, token = auth_service.login_service("tanmeshnm@gmail.com", "admin")
+    
+        assert result == "success"
+        assert token is not None
 
-    response = client.post("/login", json=credentials)
+def test_login_service_invalid_credentials():
+    auth_service = AuthService()
 
-    assert response.status_code == 200
-    assert "token" in response.json
+    user = User(
+        "tanmeshnm@gmail.com",
+        "admin2",
+        "calendly_token",
+        "calendly_user_url",
+    )
 
+    with patch.dict('services.auth_service.db', {"tanmeshnm@gmail.com": user}):
+        result, message = auth_service.login_service("invalid_email@gmail.com", "invalid_password")
+        
+        assert result == "error"
+        assert message == "Invalid email or password!"
 
-def test_login_invalid_credentials(client):
-    """
-    Test case for login with invalid credentials.
+def test_signup_service_success():
+    auth_service = AuthService()
 
-    Input:
-    - client: Flask test client.
+    result, message = auth_service.signup_service("new_user@gmail.com", "password123", "calendly_token")
+    
+    assert result == "success"
+    assert message == "User registered successfully!"
 
-    Output:
-    - None.
-
-    Functionality:
-    This function tests the behavior of the login endpoint when invalid credentials are provided.
-    It sends a POST request to the "/login" endpoint with invalid login credentials.
-    The response status code is checked to ensure it's 400 (Bad Request), indicating invalid credentials.
-    The response content is then checked to ensure it contains an "error" message.
-    """
-    credentials = {
-        "email": "nonexistent@example.com",
-        "password": base64.b64encode(b"invalid_password").decode("utf-8"),
-    }
-
-    response = client.post("/login", json=credentials)
-
-    assert response.status_code == 400
-    assert "error" in response.json
-
-
-def test_signup(client):
-    """
-    Test case for successful user signup.
-
-    Input:
-    - client: Flask test client.
-
-    Output:
-    - None.
-
-    Functionality:
-    This function tests the signup functionality by adding a new user to the database.
-    It sends a POST request to the "/signup" endpoint with valid signup data.
-    The response status code is checked to ensure it's 200 (OK), indicating successful signup.
-    The response content is then checked to ensure it contains a "message" field.
-    Finally, it checks if the new user is added to the database.
-    """
-    signup_data = {
-        "email": "newuser@example.com",
-        "password": base64.b64encode(b"new_user_password").decode("utf-8"),
-        "calendly_personal_access_token": base64.b64encode(b"new_user_token").decode(
-            "utf-8"
-        ),
-    }
-
-    response = client.post("/signup", json=signup_data)
-
-    assert response.status_code == 200
-    assert "message" in response.json
-
-    assert any(user["emailId"] == "newuser@example.com" for user in db)
-
-
-def test_signup_missing_fields(client):
-    """
-    Test case for signing up with missing fields.
-
-    Input:
-    - client: Flask test client.
-
-    Output:
-    - None.
-
-    Functionality:
-    This function tests the behavior of the signup endpoint when required fields are missing.
-    It sends a POST request to the "/signup" endpoint with signup data containing a missing field (calendly_personal_access_token).
-    The response status code is checked to ensure it's 400 (Bad Request), indicating that the server has detected a missing field.
-    The response content is then checked to ensure it contains an "error" message.
-    """
-    signup_data = {
-        "email": "missing_fields@example.com",
-        "password": base64.b64encode(b"password").decode("utf-8"),
-        # "calendly_personal_access_token": Missing this field intentionally
-    }
-
-    response = client.post("/signup", json=signup_data)
-
-    assert response.status_code == 400
-    assert "error" in response.json
+if __name__ == "__main__":
+    pytest.main()
