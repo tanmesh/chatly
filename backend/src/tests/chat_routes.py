@@ -3,7 +3,7 @@ import sys
 import pytest
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from main import app
+from backend.src.main import app
 
 from router.auth import generate_jwt_token
 from controllers.calendly_controller import CalendlyController

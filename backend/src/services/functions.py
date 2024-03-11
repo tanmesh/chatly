@@ -2,26 +2,6 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from datetime import datetime, timedelta
 
 
-# class CalendyEvent(BaseModel):
-#     """Cancel a scheduled event."""
-
-#     get_scheduled_events: bool = Field(
-#         False,
-#         description="Return true if asked for cancel a event otherwise return false",
-#     )
-
-#     meeting_name: str = Field(..., description="Get the Name of the event to cancel")
-
-#     time: str = Field(
-#         ..., description="Get the Time of the event to cancel in %H:%M:%S format"
-#     )
-
-#     day: str = Field(
-#         ...,
-#         description="Get the Day of the event to cancel. If it contains Today, Tomorrow or Yesterday, return it as it is otherwise return in %Y-%m-%d format",
-#     )
-
-
 class CancelEvent(BaseModel):
     """Cancel the given event. This is done by extracting the meeting name, start date and end date from the event description."""
 

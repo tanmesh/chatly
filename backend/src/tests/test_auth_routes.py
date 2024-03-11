@@ -4,7 +4,7 @@ import pytest
 import base64
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from main import app
+from backend.src.main import app
 
 from router.auth import db
 
