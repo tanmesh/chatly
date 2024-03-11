@@ -46,7 +46,8 @@ function Chat() {
         let systemMessage = '';
         axios.post('http://localhost:5000/chat', { "text": message }, config)
             .then((response) => {
-                systemMessage = response.data;
+                console.log(response.data['response']); 
+                systemMessage = response.data['response'];
 
                 let systemMessageContent = {
                     content: {

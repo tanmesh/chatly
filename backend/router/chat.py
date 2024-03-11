@@ -40,6 +40,9 @@ def chatz(current_user):
         output = llm.invoke(messages)
 
         dict_data = output.additional_kwargs
+        if dict_data is None or dict_data == {}:
+            return jsonify({"response": output.content}), 200
+
         function_name = dict_data["tool_calls"][0]["function"]["name"]
         argument_json = json.loads(dict_data["tool_calls"][0]["function"]["arguments"])
 
@@ -52,7 +55,7 @@ def chatz(current_user):
             tmp = json.loads(
                 output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
             )
-            return tmp["description"]
+            return jsonify({"response": tmp["description"]}), 200
         elif function_name == "CancelEvent":
             output = controller.cancel_event(argument_json)
 
@@ -62,7 +65,7 @@ def chatz(current_user):
             tmp = json.loads(
                 output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
             )
-            return tmp["description"]
+            return jsonify({"response": tmp["description"]}), 200
         elif function_name == "CreateEvent":
             output = controller.create_event(argument_json)
 
@@ -72,6 +75,6 @@ def chatz(current_user):
             tmp = json.loads(
                 output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
             )
-            return tmp["description"]
+            return jsonify({"response": tmp["description"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400

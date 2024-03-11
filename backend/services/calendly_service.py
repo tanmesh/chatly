@@ -30,6 +30,8 @@ class CalendlyService:
         all_events_json = []
         for event in response.json()["collection"]:
             logging.debug(event)
+            if event["status"] != "active":
+                continue
             start_time = datetime.fromisoformat(event["start_time"])
             end_time = datetime.fromisoformat(event["end_time"])
 
@@ -46,7 +48,6 @@ class CalendlyService:
                     "status": event["status"],
                     "name": event["name"],
                     "uri": event["uri"],
-                    "cancellation_reason": event["cancellation"]["reason"],
                 }
             )
 

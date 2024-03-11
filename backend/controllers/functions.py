@@ -81,7 +81,7 @@ class GeneralChat(BaseModel):
         Make it in markdown format. Put output like a general chat bot response.
         
         If needed, show as bullet points, if there are link then display as 
-        link with color blue. 
+        link with color blue. If not present, set default as 'No event scheduled'.
 
         If its about cancelling an event, then dont forget to add the reason for the cancellation.""",
     )
