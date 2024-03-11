@@ -17,7 +17,7 @@ function Chat() {
             navigate('/login')
         }
         setAccessToken(localStorage.getItem('accessToken'));
-    }, [])
+    })
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -46,7 +46,7 @@ function Chat() {
         let systemMessage = '';
         axios.post('http://localhost:5000/chat', { "text": message }, config)
             .then((response) => {
-                console.log(response.data['response']); 
+                console.log(response.data['response']);
                 systemMessage = response.data['response'];
 
                 let systemMessageContent = {

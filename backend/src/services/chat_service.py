@@ -45,7 +45,7 @@ class ChatService:
 
             dict_data = output.additional_kwargs
             if dict_data is None or dict_data == {}:
-                return "response", output.content
+                return output.content
 
             function_name = dict_data["tool_calls"][0]["function"]["name"]
             argument_json = json.loads(
