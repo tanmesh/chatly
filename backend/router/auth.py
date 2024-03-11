@@ -4,16 +4,19 @@ from functools import wraps
 from os import environ as env
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
+import logging
 
 auth = Blueprint("chat", __name__)
+logging.basicConfig(level=logging.DEBUG)
 
 db = [
     {
-        'emailId': 'tanmeshnm@gmail.com',
-        'password': 'admin',
-        'calendly_personal_access_token':  env.get('CALENDLY_API_KEY')
+        "emailId": "tanmeshnm@gmail.com",
+        "password": "admin",
+        "calendly_personal_access_token": env.get("CALENDLY_API_KEY"),
     }
 ]
+
 
 def token_required(f):
     @wraps(f)
@@ -49,24 +52,25 @@ def generate_jwt_token(user_id):
 @auth.route("/login", methods=["POST"])
 def login():
     try:
-        # Get username and password from the request
         emailId = request.json.get("email")
         encoded_password = request.json.get("password")
-        password = base64.b64decode(encoded_password).decode('utf-8')
+        password = base64.b64decode(encoded_password).decode("utf-8")
+
+        logging.debug(f"Login request received {emailId} {encoded_password} {password}")
 
         if not emailId or not password:
             return jsonify({"error": "Email and password are required!"}), 400
-        
+
         for it in db:
-            if it['emailId'] == emailId and it['password'] == password:
-                # Generate JWT token
+            if it["emailId"] == emailId and it["password"] == password:
                 token = generate_jwt_token(emailId + password)
                 return jsonify({"token": token}), 200
-        
+
         return jsonify({"error": "Invalid email or password!"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    
+
+
 @auth.route("/signup", methods=["POST"])
 def signup():
     try:
@@ -74,18 +78,20 @@ def signup():
         emailId = request.json.get("email")
         encoded_password = request.json.get("password")
         encoded_pat = request.json.get("calendly_personal_access_token")
-       
-        password = base64.b64decode(encoded_password).decode('utf-8')
-        calendly_personal_access_token = base64.b64decode(encoded_pat).decode('utf-8')
+
+        password = base64.b64decode(encoded_password).decode("utf-8")
+        calendly_personal_access_token = base64.b64decode(encoded_pat).decode("utf-8")
 
         if not emailId or not password or not calendly_personal_access_token:
             return jsonify({"error": "Fields cannot be empty!"}), 400
-        
-        db.append({
-            'emailId': emailId,
-            'password': password,
-            'calendly_personal_access_token': calendly_personal_access_token
-        })
+
+        db.append(
+            {
+                "emailId": emailId,
+                "password": password,
+                "calendly_personal_access_token": calendly_personal_access_token,
+            }
+        )
 
         print(db)
 

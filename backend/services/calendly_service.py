@@ -15,7 +15,7 @@ class CalendlyService:
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def list_scheduled_events(self):
-        logging.debug('Listing all events')
+        logging.debug("Listing all events")
         url = "https://api.calendly.com/scheduled_events"
 
         querystring = {"user": self.USER_URL}
@@ -46,7 +46,7 @@ class CalendlyService:
                     "status": event["status"],
                     "name": event["name"],
                     "uri": event["uri"],
-                    "cancellation_reason": event["cancellation"]["reason"]
+                    "cancellation_reason": event["cancellation"]["reason"],
                 }
             )
 
@@ -79,7 +79,7 @@ class CalendlyService:
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def cancel_event(self, args):
-        logging.debug('Cancelling event')
+        logging.debug("Cancelling event")
         logging.debug(args)
         uuid = self.get_uuid(args)
         logging.debug("UUID:", uuid)
@@ -109,7 +109,7 @@ class CalendlyService:
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def create_event(self, args):
-        logging.debug('Creating event')
+        logging.debug("Creating event")
         logging.debug(args)
         url = "https://api.calendly.com/one_off_event_types"
 
