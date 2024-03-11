@@ -1,20 +1,20 @@
 import requests
 import json
 import logging
+from retry import retry
 from datetime import datetime, timedelta
 from exceptions.calendly_client_exception import CalendlyClientException
 from exceptions.calendly_server_exception import CalendlyServerException
 
 logging.basicConfig(level=logging.DEBUG)
 
-# user_url = "https://api.calendly.com/users/fe8644f5-39ae-488a-af18-382f4757f0d7"
 class CalendlyService:
     BASE_URL = "https://api.calendly.com"
     SCHEDULED_EVENT_URL = BASE_URL + "/scheduled_events"
     CANCEL_EVENT_URL = BASE_URL + "/scheduled_events/{}/cancellation"
     CREATE_EVENT_URL = BASE_URL + "/one_off_event_types"
 
-    # @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
+    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def list_scheduled_events(self, user):
         """
         Retrieves a list of scheduled events for the current user.
@@ -82,7 +82,7 @@ class CalendlyService:
 
         return all_events_json
 
-    # @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
+    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def cancel_event(self, args, user):
         """
         Cancels the specified event.
@@ -138,7 +138,7 @@ class CalendlyService:
         
         return response.text
 
-    # @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
+    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def create_event(self, args, user):
         """
         Creates a new event with the specified details.

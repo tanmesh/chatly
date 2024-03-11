@@ -64,7 +64,8 @@ pytest
 
 
 ## Architecture
-The architecture of the Calendly Integration Chatbot consists of the following components:
+We have a web-client (in react) which interacts with a backend flask application (in python). 
+The backend architecture of the Calendly Integration Chatbot consists of the following components:
 
 1. **Entry Point: `main.py`**
     - This serves as the entry point for the application and handles incoming requests from users.
@@ -84,6 +85,9 @@ The architecture of the Calendly Integration Chatbot consists of the following c
 6. **Error Handling**
     - Error handling is implemented to handle various scenarios, including incorrect request arguments and transient network errors. Retry logic with exponential backoff and jitter is used to handle transient errors.
 
+## Langchain Integration
+The chatbot uses Langchain's function calling to seamlessly integrate with the Calendly API, simplifying user interactions. It defines Pydantic models (as defined [here](https://python.langchain.com/docs/modules/model_io/chat/function_calling#pydantic-class)) for commands like canceling, listing and creating events; by encapsulating parameters like meeting details such as start date, end date, duration. By extracting parameters from user input and passing them to corresponding API functions, the chatbot efficiently handles actions like canceling, listing or creating events. 
+
 ## Code Design Principles
 The codebase follows the following design principles:
 
@@ -102,11 +106,11 @@ The codebase follows the following design principles:
 ## Extension Plans
 The following extension plans are identified for future development:
 
-1. **Redis Cache Integration**
-    - Integrate Redis cache for session management instead of in-memory cache.
+1. **Cache Integration**
+    - Integrate with a cache like Redis for session management instead of in-memory cache. A centralised redis cache will be useful once we scale the application layer with more than 1 instance.
 
 2. **Durable Database Integration**
-    - Integrate a durable database for storing user objects and other application data.
+    - Integrate a durable database for storing user objects and other application data. Durable datastore will make sure that we don't loose the data in case of application re-start.
 
 3. **Deployment on AWS with CI/CD**
     - Deploy the application on AWS infrastructure and implement Continuous Integration/Continuous Deployment (CI/CD) pipelines for automated deployment.

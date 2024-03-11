@@ -72,13 +72,13 @@ class ChatService:
             tmp = json.loads(
                 output.additional_kwargs["tool_calls"][0]["function"]["arguments"]
             )
-            return "response", tmp["description"]
+            return tmp["description"]
         except CalendlyClientException as e:
             logging.error("Error processing chat request" + str(e))
-            return "error", str(e)
+            raise CalendlyClientException(str(e))
         except CalendlyServerException as e:
             logging.error("Error processing chat request" + str(e))
-            return "error", str(e)
+            raise CalendlyServerException(str(e))
         except Exception as e:
             logging.error("Error processing chat request" + str(e))
-            return "error", str(e)
+            raise Exception(str(e))
