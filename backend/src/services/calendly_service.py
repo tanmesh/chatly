@@ -44,7 +44,7 @@ class CalendlyService:
             "GET", self.SCHEDULED_EVENT_URL, headers=headers, params=querystring
         )
 
-        if response.status_code != 200:
+        if response.status_code  >= 300:
             logging.error(
                 "Failed to list events. Status code: %d", response.status_code
             )
@@ -86,7 +86,7 @@ class CalendlyService:
 
         return all_events_json
 
-    @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
+    # @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def cancel_event(self, args, user):
         """
         Cancels the specified event.
@@ -102,7 +102,7 @@ class CalendlyService:
         logging.debug("Cancelling event")
         logging.debug(args)
 
-        uuid = self.get_uuid(args)
+        uuid = self.get_uuid(args, user)
         logging.debug("UUID:", uuid)
         if uuid == "":
             logging.error("No event found")
@@ -122,7 +122,7 @@ class CalendlyService:
             headers=headers,
         )
 
-        if response.status_code != 200:
+        if response.status_code  >= 300:
             logging.error(
                 "Failed to cancel event. Status code: %d", response.status_code
             )
@@ -203,10 +203,10 @@ class CalendlyService:
         }
         return switcher.get(date, date)
 
-    def get_uuid(self, args):
+    def get_uuid(self, args, user):
         args["day"] = self.get_date(args["day"])
 
-        all_events = self.list_scheduled_events()
+        all_events = self.list_scheduled_events(user)
         for event in all_events:
             if event["status"] != "active":
                 continue
