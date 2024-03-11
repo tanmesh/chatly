@@ -1,11 +1,13 @@
 import base64
 import logging
 from flask import Blueprint, jsonify, request
-from services.auth_service import login_service, signup_service
+from services.auth_service import AuthService
 
-auth = Blueprint("auth", __name__) 
+auth = Blueprint("auth", __name__)
 logging.basicConfig(level=logging.DEBUG)
 
+
+auth_service = AuthService()
 
 @auth.route("/login", methods=["POST"])
 def login():
@@ -25,7 +27,7 @@ def login():
         if not email or not password:
             return jsonify({"error": "Email and password are required!"}), 400
 
-        type, message = login_service(email, password)
+        type, message = auth_service.login_service(email, password)
 
         if type == "error":
             return jsonify({"error": message}), 400
@@ -54,7 +56,7 @@ def signup():
         if not email or not password or not calendly_personal_access_token:
             return jsonify({"error": "Fields cannot be empty!"}), 400
 
-        type, message = signup_service(email, password, calendly_personal_access_token)
+        type, message = auth_service.signup_service(email, password, calendly_personal_access_token)
 
         if type == "error":
             return jsonify({"error": message}), 400

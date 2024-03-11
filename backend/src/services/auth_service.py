@@ -3,14 +3,15 @@ from functools import wraps
 from os import environ as env
 from flask import jsonify, request
 from datetime import datetime, timedelta
+from entity.user import User
 
-db = {}
-
-db["tanmeshnm@gmail.com"] = {
-    "emailId": "tanmeshnm@gmail.com",
-    "password": "admin",
-    "calendly_personal_access_token": env.get("CALENDLY_API_KEY"),
-    "calendly_user_url": env.get("CALENDLY_USER_URL_KEY"),
+db = {
+    "tanmeshnm@gmail.com": User(
+        "tanmeshnm@gmail.com",
+        "admin",
+        env.get("CALENDLY_API_KEY"),
+        env.get("CALENDLY_USER_URL_KEY"),
+    )
 }
 
 auth_cache = {}
@@ -35,39 +36,40 @@ def token_required(f):
     return decorated
 
 
-def generate_jwt_token(user_id):
-    payload = {
-        "user_id": user_id,
-        "exp": datetime.utcnow() + timedelta(hours=1),  # Token expiration time
-    }
+class AuthService:
+    def generate_jwt_token(self, user_id):
+        payload = {
+            "user_id": user_id,
+            "exp": datetime.utcnow() + timedelta(hours=1),  # Token expiration time
+        }
 
-    token = jwt.encode(payload, "1234", algorithm="HS256")
-    return token
+        token = jwt.encode(payload, "1234", algorithm="HS256")
+        return token
 
+    def login_service(self, emailId, password):
+        for token, user in db.items():
+            print(token, user)
+            if user.get_email() == emailId and user.get_password() == password:
+                token = self.generate_jwt_token(emailId + password)
 
-def login_service(emailId, password):
-    for token, user in db.items():
-        print(token, user)
-        if user["emailId"] == emailId and user["password"] == password:
-            token = generate_jwt_token(emailId + password)
+                print("token:", token)
+                auth_cache[token] = user
 
-            print('token:', token)
-            auth_cache[token] = user
+                print("auth_cache:")
+                print(auth_cache)
+                return "success", token
+        return "error", "Invalid email or password!"
 
-            print('auth_cache:')
-            print(auth_cache)
-            return "success", token
-    return "error", "Invalid email or password!"
+    def signup_service(self, emailId, password, calendly_personal_access_token):
+        try:
+            user = User(
+                emailId,
+                password,
+                calendly_personal_access_token,
+                env.get("CALENDLY_USER_URL"),
+            )
 
-
-def signup_service(emailId, password, calendly_personal_access_token):
-    try:
-        db[emailId] = {
-                "emailId": emailId,
-                "password": password,
-                "calendly_personal_access_token": calendly_personal_access_token,
-                "calendly_user_url": env.get("CALENDLY_USER_URL"),
-            }
-        return "success", "User registered successfully!"
-    except:
-        return "error", "Error registering user!"
+            db[emailId] = user
+            return "success", "User registered successfully!"
+        except:
+            return "error", "Error registering user!"

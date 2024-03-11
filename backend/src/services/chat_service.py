@@ -1,7 +1,7 @@
 import json
 from os import environ as env
 from langchain_core.messages import HumanMessage
-from engine.chat_engine import ChatEngine
+from services.chat_engine import ChatEngine
 from services.calendly_service import CalendlyService
 from services.functions import (
     CancelEvent,
@@ -23,6 +23,7 @@ chat_engine_general_chat = ChatEngine(
     model="gpt-3.5-turbo-0125",
     tools=[GeneralChat],
 )
+
 
 class ChatService:
     def __init__(self, calendly_service: CalendlyService):
@@ -56,10 +57,14 @@ class ChatService:
                 output_description = self.calendy_service.list_scheduled_events(user)
                 summary = "Summarize the list of events"
             elif function_name == "CancelEvent":
-                output_description = self.calendy_service.cancel_event(argument_json, user)
+                output_description = self.calendy_service.cancel_event(
+                    argument_json, user
+                )
                 summary = f"Link--{output_description} \n\n Summarize the cancellation of the event with the provided link."
             elif function_name == "CreateEvent":
-                output_description = self.calendy_service.create_event(argument_json, user)
+                output_description = self.calendy_service.create_event(
+                    argument_json, user
+                )
                 summary = "Summarize the new event created"
 
             output = chat_engine_general_chat.llm.invoke(

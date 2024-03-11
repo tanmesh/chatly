@@ -12,6 +12,7 @@ chat = Blueprint("chat", __name__)
 calendly_service = CalendlyService()
 chat_service = ChatService(calendly_service)
 
+
 ## This is the endpoint that the frontend will call to send the input prompt.
 @chat.route("/chat", methods=["POST"])
 @token_required
