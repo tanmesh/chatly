@@ -6,10 +6,12 @@ import { useNavigate } from 'react-router-dom'
 function Signup() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [calendyAccessToken, setCalendyAccessToken] = useState('')
+    const [calendlyAccessToken, setCalendlyAccessToken] = useState('')
+    const [calendlyUserUrl, setCalendlyUserUrl] = useState('')
     const [error, setError] = useState('')
     const description = "Effortlessly manage your schedule with our intuitive chatbot. Simplify event listing and cancellations with ease. Experience the convenience today!"
-    const calendyAccessTokenLink = "https://developer.calendly.com/how-to-authenticate-with-personal-access-tokens"
+    const calendlyAccessTokenLink = "https://developer.calendly.com/how-to-authenticate-with-personal-access-tokens"
+    const calendlyUserUrlLink = "https://developer.calendly.com/how-to-find-the-organization-or-user-uri"
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -23,7 +25,7 @@ function Signup() {
     const handleSubmit = (e) => {
         e.preventDefault()
 
-        if (email === '' || password === '' || calendyAccessToken === '') {
+        if (email === '' || password === '' || calendlyAccessToken === '' || calendlyUserUrl === '') {
             setError('Please fill in all fields')
             return
         }
@@ -34,7 +36,13 @@ function Signup() {
             },
         };
 
-        const body = JSON.stringify({ email, password: btoa(password), calendly_personal_access_token: btoa(calendyAccessToken) });
+        const body = JSON.stringify(
+            {
+                email: email,
+                password: btoa(password),
+                calendly_personal_access_token: btoa(calendlyAccessToken),
+                calendly_user_uri: btoa(calendlyUserUrl)
+            });
 
         axios.post('http://localhost:5000/signup', body, config)
             .then(() => {
@@ -70,11 +78,21 @@ function Signup() {
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
                                 <path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" />
                             </svg>
-                            <input type="text" className="grow" placeholder="Your Calendy Access Token" value={calendyAccessToken} onChange={(e) => { setCalendyAccessToken(e.target.value) }} />
+                            <input type="text" className="grow" placeholder="Your Calendy Access Token" value={calendlyAccessToken} onChange={(e) => { setCalendlyAccessToken(e.target.value) }} />
                         </label>
                         <p className="text-xs text-gray-500">
                             Don't have a Personal Access Token? You can get one from this&nbsp;
-                            <a className='text-blue-800 underline' href={calendyAccessTokenLink} target="_blank" rel="noopener noreferrer">link</a>.
+                            <a className='text-blue-800 underline' href={calendlyAccessTokenLink} target="_blank" rel="noopener noreferrer">link</a>.
+                        </p>
+                        <label className="input input-bordered flex items-center gap-2 w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
+                                <path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" />
+                            </svg>
+                            <input type="text" className="grow" placeholder="Your User URI" value={calendlyUserUrl} onChange={(e) => { setCalendlyUserUrl(e.target.value) }} />
+                        </label>
+                        <p className="text-xs text-gray-500">
+                            Don't have a User URI? You can get one from this&nbsp;
+                            <a className='text-blue-800 underline' href={calendlyUserUrlLink} target="_blank" rel="noopener noreferrer">link</a>.
                         </p>
                         <button type="submit" className="btn btn-neutral text-white w-40 mx-auto">Sign Up</button>
                     </form>
