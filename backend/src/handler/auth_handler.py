@@ -51,6 +51,7 @@ def signup():
         encoded_pat = request.json.get("calendly_personal_access_token")
         encoded_user_url = request.json.get("calendly_user_uri")
 
+        
         try:
             password = base64.b64decode(encoded_password).decode("utf-8")
             calendly_personal_access_token = base64.b64decode(encoded_pat).decode("utf-8")    

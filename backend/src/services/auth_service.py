@@ -5,14 +5,15 @@ from flask import jsonify, request
 from datetime import datetime, timedelta
 from entity.user import User
 
-db = {
-    "tanmeshnm@gmail.com": User(
-        "tanmeshnm@gmail.com",
-        "admin",
-        env.get("CALENDLY_API_KEY"),
-        env.get("CALENDLY_USER_URL_KEY"),
-    )
-}
+db = { }
+# db = {
+#     "tanmeshnm@gmail.com": User(
+#         "tanmeshnm@gmail.com",
+#         "admin",
+#         env.get("CALENDLY_API_KEY"),
+#         env.get("CALENDLY_USER_URL_KEY"),
+#     )
+# }
 
 auth_cache = {}
 
@@ -48,7 +49,6 @@ class AuthService:
 
     def login_service(self, emailId, password):
         for token, user in db.items():
-            print(token, user)
             if user.get_email() == emailId and user.get_password() == password:
                 token = self.generate_jwt_token(emailId + password)
 
@@ -62,6 +62,10 @@ class AuthService:
 
     def signup_service(self, emailId, password, calendly_personal_access_token, calendly_user_url):
         try:
+            for _, user in db.items():
+                if user.get_email() == emailId and user.get_password() == password:
+                    return "error", "User already exists!"
+            
             user = User(
                 emailId,
                 password,
