@@ -1,2 +1,4 @@
 .DS_Store
 Function calling coding challenge.md
+.vscode
+__pycache__/
