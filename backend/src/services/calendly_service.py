@@ -1,8 +1,9 @@
 import requests
 import json
+import pytz
 import logging
 from retry import retry
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from exceptions.calendly_client_exception import CalendlyClientException
 from exceptions.calendly_server_exception import CalendlyServerException
 
@@ -57,7 +58,8 @@ class CalendlyService:
 
         all_events_json = []
         for event in response.json()["collection"]:
-            if event["status"] != "active":
+            logging.debug(event)
+            if event["status"] != "active" or event["start_time"] < datetime.now().isoformat():
                 continue
             start_time = datetime.fromisoformat(event["start_time"])
             end_time = datetime.fromisoformat(event["end_time"])
@@ -66,11 +68,11 @@ class CalendlyService:
                 {
                     "start_time": {
                         "day": start_time.strftime("%Y-%m-%d"),
-                        "time": start_time.strftime("%H:%M:%S"),
+                        "time": self.convert_to_current_timezone(start_time.strftime("%H:%M:%S")),
                     },
                     "end_time": {
                         "day": end_time.strftime("%Y-%m-%d"),
-                        "time": end_time.strftime("%H:%M:%S"),
+                        "time": self.convert_to_current_timezone(end_time.strftime("%H:%M:%S")),
                     },
                     "status": event["status"],
                     "name": event["name"],
@@ -128,13 +130,13 @@ class CalendlyService:
             logging.error(
                 "Failed to cancel event. Status code: %d", response.status_code
             )
-            raise CalendlyServerException("Failed to cancel event. Status code: %d", response.status_code)
+            raise CalendlyServerException(f"Failed to cancel event. Status code: {response.status_code}")
 
         if response.status_code  >= 400:
             logging.error(
                 "Failed to cancel event. Status code: %d", response.status_code
             )
-            raise CalendlyClientException("Failed to cancel event. Status code: %d", response.status_code)
+            raise CalendlyClientException(f"Failed to cancel event. Status code: {response.status_code}")
         
         return response.text
 
@@ -196,13 +198,13 @@ class CalendlyService:
             logging.error(
                 "Failed to create event. Status code: %d", response.status_code
             )
-            raise CalendlyServerException("Failed to create event. Status code: %d", response.status_code)
+            raise CalendlyServerException(f"Failed to create event. Status code: {response.status_code}")
 
         if response.status_code >= 400:
             logging.error(
                 "Failed to create event. Status code: %d", response.status_code
             )
-            raise CalendlyClientException("Failed to create event. Status code: %d", response.status_code)
+            raise CalendlyClientException(f"Failed to create event. Status code: {response.status_code}")
 
         return json.loads(response.text)["resource"]["scheduling_url"]
 
@@ -228,3 +230,15 @@ class CalendlyService:
             ):
                 return event["uri"].split("/")[-1]
         return ""
+
+    def convert_to_current_timezone(self, input_time_str):
+        input_time_utc = time.fromisoformat(input_time_str)
+
+        current_date = datetime.utcnow().date()
+        input_datetime_utc = datetime.combine(current_date, input_time_utc)
+        
+        pst_timezone = pytz.timezone('US/Pacific')
+        
+        input_datetime_pst = input_datetime_utc.replace(tzinfo=pytz.utc).astimezone(pst_timezone)
+    
+        return input_datetime_pst.strftime("%H:%M:%S")
