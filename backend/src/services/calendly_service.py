@@ -16,7 +16,7 @@ class CalendlyService:
     CREATE_EVENT_URL = BASE_URL + "/one_off_event_types"
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
-    def list_scheduled_events(self, user):
+    def list_scheduled_events(self, args, user):
         """
         Retrieves a list of scheduled events for the current user.
 
@@ -59,8 +59,6 @@ class CalendlyService:
         all_events_json = []
         for event in response.json()["collection"]:
             logging.debug(event)
-            if event["status"] != "active" or event["start_time"] < datetime.now().isoformat():
-                continue
             start_time = datetime.fromisoformat(event["start_time"])
             end_time = datetime.fromisoformat(event["end_time"])
 
@@ -105,9 +103,9 @@ class CalendlyService:
                 logging.error("Missing required argument: " + args)
                 raise CalendlyClientException(f"Missing required argument: {arg}")
 
-        uuid = self.get_uuid(args, user)
+        uuid_list = self.get_uuid(args, user)
 
-        if uuid == "":
+        if uuid_list == []:
             logging.debug("No event found")
             return "No event found"
 
@@ -118,27 +116,31 @@ class CalendlyService:
             "Authorization": f"Bearer {user.get_calendly_personal_access_token()}",
         }
 
-        response = requests.request(
-            "POST",
-            self.CANCEL_EVENT_URL.format(uuid),
-            json=payload,
-            headers=headers,
-        )
-
-        logging.debug(response.text)
-        if response.status_code  >= 500:
-            logging.error(
-                "Failed to cancel event. Status code: %d", response.status_code
+        output = ""
+        for uuid in uuid_list:
+            logging.debug(f"Cancelling event with uuid: {uuid}")
+            response = requests.request(
+                "POST",
+                self.CANCEL_EVENT_URL.format(uuid),
+                json=payload,
+                headers=headers,
             )
-            raise CalendlyServerException(f"Failed to cancel event. Status code: {response.status_code}")
 
-        if response.status_code  >= 400:
-            logging.error(
-                "Failed to cancel event. Status code: %d", response.status_code
-            )
-            raise CalendlyClientException(f"Failed to cancel event. Status code: {response.status_code}")
-        
-        return response.text
+            logging.debug(response.text)
+            if response.status_code  >= 500:
+                logging.error(
+                    "Failed to cancel event. Status code: %d", response.status_code
+                )
+                raise CalendlyServerException(f"Failed to cancel event. Status code: {response.status_code}")
+
+            if response.status_code  >= 400:
+                logging.error(
+                    "Failed to cancel event. Status code: %d", response.status_code
+                )
+                raise CalendlyClientException(f"Failed to cancel event. Status code: {response.status_code}")
+
+            output.append(json.loads(response.text))
+        return output
 
     @retry(tries=3, delay=2, backoff=2, jitter=(1, 3), logger=logging)
     def create_event(self, args, user):
@@ -220,16 +222,19 @@ class CalendlyService:
         args["day"] = self.get_date(args["day"])
 
         all_events = self.list_scheduled_events(user)
+
+        uuid_list = []
         for event in all_events:
-            if event["status"] != "active":
-                continue
             if (
                 event["start_time"]["time"] == args["time"]
                 or event["start_time"]["day"] == args["day"]
                 or event["name"].lower() == args["meeting_name"].lower()
-            ):
-                return event["uri"].split("/")[-1]
-        return ""
+            ):  
+                uuid_list.append(event["uri"].split("/")[-1])
+                if args["all_events"] == False:
+                    break
+                 
+        return uuid_list
 
     def convert_to_current_timezone(self, input_time_str):
         input_time_utc = time.fromisoformat(input_time_str)

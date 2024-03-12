@@ -77,8 +77,8 @@ class ChatService:
             logging.error("Error processing chat request" + str(e))
             raise CalendlyClientException(str(e))
         except CalendlyServerException as e:
-            logging.error("Error processing chat request" + str(e))
+            logging.error("Error processing chat request " + str(e))
             raise CalendlyServerException(str(e))
         except Exception as e:
-            logging.error("Error processing chat request" + str(e))
+            logging.error("Error processing chat request " + str(e))
             raise Exception(str(e))
